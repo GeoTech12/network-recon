@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local recon output
+reports/*
+!reports/.gitkeep
+
+# Enviroment/secrets
+.env
+.env.*
