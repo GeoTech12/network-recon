@@ -24,6 +24,12 @@ def _no_recon_subnet(monkeypatch):
     monkeypatch.setattr(config, "RECON_SUBNET", None)
 
 
+@pytest.fixture(autouse=True)
+def _stub_enrichment(monkeypatch):
+    """No test should reach real hostname/ARP enrichment; identity by default."""
+    monkeypatch.setattr(routes, "enrich_hosts", lambda hosts, **_kwargs: hosts)
+
+
 def test_scan_returns_discovered_hosts(client, monkeypatch):
     monkeypatch.setattr(
         routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
@@ -126,3 +132,64 @@ def test_scan_accepts_valid_recon_subnet(client, monkeypatch):
     data = response.get_json()
     assert data["network"] == "192.168.5.0/28"
     assert [d["ip"] for d in data["devices"]] == ["192.168.5.2"]
+
+
+def test_scan_includes_hostname_and_mac_when_enrichment_provides_them(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+
+    def fake_enrich(hosts, **_kwargs):
+        hosts[0].hostname = "desktop-lab"
+        hosts[0].mac = "52:54:00:1a:2b:3c"
+        return hosts
+
+    monkeypatch.setattr(routes, "enrich_hosts", fake_enrich)
+
+    response = client.post("/scan", data={"authorized": "on"})
+
+    assert response.status_code == 200
+    device = response.get_json()["devices"][0]
+    assert device["hostname"] == "desktop-lab"
+    assert device["mac"] == "52:54:00:1a:2b:3c"
+
+
+def test_scan_succeeds_when_enrichment_yields_nothing(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+
+    response = client.post("/scan", data={"authorized": "on"})
+
+    assert response.status_code == 200
+    device = response.get_json()["devices"][0]
+    assert device["hostname"] is None
+    assert device["mac"] is None
+
+
+def test_scan_passes_hostname_flag_from_config_to_enrichment(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+    monkeypatch.setattr(config, "RECON_RESOLVE_HOSTNAMES", True)
+
+    seen = {}
+
+    def fake_enrich(hosts, *, resolve_hostnames=False, **_kwargs):
+        seen["resolve_hostnames"] = resolve_hostnames
+        return hosts
+
+    monkeypatch.setattr(routes, "enrich_hosts", fake_enrich)
+
+    client.post("/scan", data={"authorized": "on"})
+
+    assert seen["resolve_hostnames"] is True

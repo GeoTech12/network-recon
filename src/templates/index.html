@@ -28,7 +28,9 @@
 
   <p class="hint">
     Discovery sends a single ICMP echo request to each address on your local
-    private subnet. No ports are scanned.
+    private subnet. MAC addresses are read from this machine's existing ARP
+    cache; hostnames are looked up only when reverse-DNS resolution is enabled.
+    Missing hostnames and MAC addresses are normal. No ports are scanned.
   </p>
 
   <div id="scan-status" class="status" aria-live="polite">

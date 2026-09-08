@@ -33,6 +33,11 @@ def _env_flag(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+# Reverse-DNS hostname resolution is opt-in. When false (the default) a scan
+# performs no name resolution of any kind and every host's hostname stays unset.
+RECON_RESOLVE_HOSTNAMES = _env_flag("RECON_RESOLVE_HOSTNAMES")
+
+
 class Config:
     """Base configuration."""
 

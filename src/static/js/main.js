@@ -47,8 +47,8 @@ document.addEventListener("DOMContentLoaded", function () {
       var row = document.createElement("tr");
       [
         device.ip || "—",
-        PENDING,
-        PENDING,
+        device.hostname || "Unknown",
+        device.mac || "Not available",
         device.status || "unknown",
         PENDING,
         data.scan_time || "—",

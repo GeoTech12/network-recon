@@ -48,14 +48,29 @@ When you start a scan the application:
    `ping` command (fixed arguments, no shell, no retries, no elevated
    privileges). Addresses that reply are reported as responsive hosts.
 
-No ports are scanned and no hostnames or MAC addresses are collected yet; those
-columns are placeholders for later milestones. Scan results are returned to your
-browser only &mdash; nothing is written to disk.
+No ports are scanned. Scan results are returned to your browser only &mdash;
+nothing is written to disk or logged.
 
-Set an explicit subnet like this if auto-detection is not suitable:
+### Device information
+
+Each responsive host is then enriched, best effort:
+
+* **MAC address** &mdash; read from this machine's existing ARP cache
+  (`/proc/net/arp`), which the ping sweep populates for hosts on the same
+  network segment. Only complete, valid entries are used. Nothing is inferred or
+  actively probed, so a host that is not in the cache simply shows no MAC.
+* **Hostname** &mdash; a reverse-DNS (PTR) lookup, and **only if you opt in** by
+  setting `RECON_RESOLVE_HOSTNAMES=1`. It is off by default, in which case no
+  name resolution happens at all. Many home devices have no PTR record, so a
+  blank hostname is common and never fails the scan.
+
+Example fictional values used in this documentation: IPs like `192.0.2.10`,
+hostnames like `desktop-lab` or `printer-demo`, MACs like `52:54:00:1a:2b:3c`.
+
+Set an explicit subnet, or enable hostname resolution, like this:
 
 ```bash
-RECON_SUBNET=192.168.1.0/24 python src/main.py
+RECON_SUBNET=192.168.1.0/24 RECON_RESOLVE_HOSTNAMES=1 python src/main.py
 ```
 
 > Milestones beyond host discovery (device details, port checks, reporting, UI
