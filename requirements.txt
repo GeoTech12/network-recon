@@ -1,0 +1,7 @@
+# Network Recon - Python dependencies
+# Only packages actually used by the application are listed here.
+
+Flask>=3.0,<4.0
+
+# Development / testing
+pytest>=8.0,<9.0

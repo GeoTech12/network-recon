@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ app_name | default("Network Recon") }}{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <span class="site-header__title">{{ app_name | default("Network Recon") }}</span>
+      <span class="site-header__tag">Authorized local reconnaissance</span>
+    </header>
+
+    <main class="container">{% block content %}{% endblock %}</main>
+
+    <footer class="site-footer">
+      <p>
+        For use only on networks you own or are explicitly authorized to assess.
+        This tool performs discovery and identification only &mdash; no
+        exploitation, credential attacks, or denial-of-service testing.
+      </p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

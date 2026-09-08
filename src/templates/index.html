@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h1>{{ app_name }}</h1>
+  <p class="lede">{{ app_description }}</p>
+</section>
+
+<section class="card notice" role="note" aria-label="Authorization notice">
+  <h2>Authorization &amp; Ethical Use</h2>
+  <p>
+    Network Recon is intended <strong>only</strong> for networks you own or have
+    explicit written permission to assess. Do not use it against arbitrary
+    Internet targets. The tool does not attempt authentication, exploit
+    vulnerabilities, or perform denial-of-service testing.
+  </p>
+</section>
+
+<section class="card">
+  <h2>Run a Scan</h2>
+
+  <label class="confirm">
+    <input type="checkbox" id="authorized" name="authorized" />
+    I confirm I am authorized to perform reconnaissance on this network.
+  </label>
+
+  <button id="scan-button" type="button" disabled>Start Scan</button>
+
+  <div id="scan-status" class="status" aria-live="polite">
+    No scan has been run yet.
+  </div>
+</section>
+
+<section class="card">
+  <h2>Results</h2>
+  <table class="results">
+    <thead>
+      <tr>
+        {% for field in result_fields %}
+        <th>{{ field }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody id="results-body">
+      <tr>
+        <td class="results__empty" colspan="{{ result_fields | length }}">
+          Results will appear here after a scan.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
