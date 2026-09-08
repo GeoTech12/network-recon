@@ -15,7 +15,7 @@ from recon.errors import NetworkDetectionError
 
 
 def _fail_if_called(*_args, **_kwargs):
-    raise AssertionError("discover_hosts should not run in this scenario")
+    raise AssertionError("this collaborator should not run in this scenario")
 
 
 @pytest.fixture(autouse=True)
@@ -49,7 +49,7 @@ def test_scan_returns_discovered_hosts(client, monkeypatch):
         ],
     )
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     data = response.get_json()
@@ -69,7 +69,7 @@ def test_scan_reports_when_no_hosts_found(client, monkeypatch):
     )
     monkeypatch.setattr(routes, "discover_hosts", lambda network: [])
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     data = response.get_json()
@@ -95,7 +95,7 @@ def test_scan_handles_network_detection_failure(client, monkeypatch):
     monkeypatch.setattr(routes, "detect_local_network", raise_detection_error)
     monkeypatch.setattr(routes, "discover_hosts", _fail_if_called)
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     # Detection failure is a server-side condition, not a bad request.
     assert response.status_code == 500
@@ -109,7 +109,7 @@ def test_scan_rejects_public_recon_subnet(client, monkeypatch):
     monkeypatch.setattr(config, "RECON_SUBNET", "8.8.8.0/24")
     monkeypatch.setattr(routes, "discover_hosts", _fail_if_called)
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 400
     assert "private address ranges" in response.get_json()["message"]
@@ -119,7 +119,7 @@ def test_scan_rejects_oversized_recon_subnet(client, monkeypatch):
     monkeypatch.setattr(config, "RECON_SUBNET", "10.0.0.0/16")
     monkeypatch.setattr(routes, "discover_hosts", _fail_if_called)
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 400
     assert "256" in response.get_json()["message"]
@@ -132,7 +132,7 @@ def test_scan_accepts_valid_recon_subnet(client, monkeypatch):
         routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.5.2")]
     )
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     data = response.get_json()
@@ -155,7 +155,7 @@ def test_scan_includes_hostname_and_mac_when_enrichment_provides_them(client, mo
 
     monkeypatch.setattr(routes, "enrich_hosts", fake_enrich)
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     device = response.get_json()["devices"][0]
@@ -171,7 +171,7 @@ def test_scan_succeeds_when_enrichment_yields_nothing(client, monkeypatch):
         routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
     )
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     device = response.get_json()["devices"][0]
@@ -196,7 +196,7 @@ def test_scan_passes_hostname_flag_from_config_to_enrichment(client, monkeypatch
 
     monkeypatch.setattr(routes, "enrich_hosts", fake_enrich)
 
-    client.post("/scan", data={"authorized": "on"})
+    client.post("/scan", json={"authorized": True})
 
     assert seen["resolve_hostnames"] is True
 
@@ -215,7 +215,7 @@ def test_scan_includes_open_ports_when_check_ports_provides_them(client, monkeyp
 
     monkeypatch.setattr(routes, "check_ports", fake_check_ports)
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     assert response.get_json()["devices"][0]["open_ports"] == [
@@ -231,7 +231,7 @@ def test_scan_open_ports_empty_by_default(client, monkeypatch):
         routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
     )
 
-    response = client.post("/scan", data={"authorized": "on"})
+    response = client.post("/scan", json={"authorized": True})
 
     assert response.status_code == 200
     assert response.get_json()["devices"][0]["open_ports"] == []
@@ -250,7 +250,7 @@ def test_scan_response_includes_device_count_and_feature_flags(client, monkeypat
         ],
     )
 
-    data = client.post("/scan", data={"authorized": "on"}).get_json()
+    data = client.post("/scan", json={"authorized": True}).get_json()
 
     assert data["device_count"] == 2
     assert data["features"] == {
@@ -269,7 +269,7 @@ def test_scan_feature_flags_reflect_config(client, monkeypatch):
     monkeypatch.setattr(config, "RECON_RESOLVE_HOSTNAMES", True)
     monkeypatch.setattr(config, "RECON_CHECK_PORTS", True)
 
-    data = client.post("/scan", data={"authorized": "on"}).get_json()
+    data = client.post("/scan", json={"authorized": True}).get_json()
 
     assert data["features"] == {
         "hostname_resolution": True,
@@ -294,7 +294,59 @@ def test_scan_passes_port_flag_and_network_from_config_to_check_ports(client, mo
 
     monkeypatch.setattr(routes, "check_ports", fake_check_ports)
 
-    client.post("/scan", data={"authorized": "on"})
+    client.post("/scan", json={"authorized": True})
 
     assert seen["enabled"] is True
     assert seen["network"] == network
+
+
+def test_scan_rejects_form_encoded_body(client, monkeypatch):
+    """A cross-site form post cannot start a scan: /scan requires JSON."""
+    monkeypatch.setattr(routes, "detect_local_network", _fail_if_called)
+    monkeypatch.setattr(routes, "discover_hosts", _fail_if_called)
+
+    response = client.post("/scan", data={"authorized": "on"})
+
+    assert response.status_code == 400
+    assert response.get_json()["status"] == "error"
+
+
+def test_scan_rejects_oversized_auto_detected_network(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("10.0.0.0/16")
+    )
+    monkeypatch.setattr(routes, "discover_hosts", _fail_if_called)
+
+    response = client.post("/scan", json={"authorized": True})
+
+    # Kept at 400: the message tells the user how to fix it (set RECON_SUBNET).
+    assert response.status_code == 400
+    body = response.get_json()
+    assert body["status"] == "error"
+    assert "256" in body["message"]
+
+
+def test_scan_never_invokes_reporting_or_touches_reports_dir(client, monkeypatch):
+    from recon.reporting import REPORTS_DIR
+
+    before = (
+        sorted(p.name for p in REPORTS_DIR.iterdir()) if REPORTS_DIR.exists() else []
+    )
+
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+    monkeypatch.setattr(routes, "build_report_model", _fail_if_called)
+    monkeypatch.setattr(routes, "generate_report", _fail_if_called)
+
+    response = client.post("/scan", json={"authorized": True})
+
+    assert response.status_code == 200
+    after = (
+        sorted(p.name for p in REPORTS_DIR.iterdir()) if REPORTS_DIR.exists() else []
+    )
+    assert after == before
+    assert not any(name.endswith(".html") for name in after)

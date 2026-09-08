@@ -26,26 +26,28 @@ def create_app(config_object: type = Config) -> Flask:
 
 
 def _register_security_headers(app: Flask) -> None:
-    """Send a minimal Content-Security-Policy.
+    """Send a minimal Content-Security-Policy and related response headers.
 
     The dashboard loads only same-origin assets and talks only to its own
-    ``/scan`` endpoint, so a strict policy costs nothing and blocks any
-    accidental third-party resource.
+    endpoints, so a strict policy costs nothing and blocks any accidental
+    third-party resource. ``frame-ancestors 'none'`` prevents framing and
+    ``nosniff`` prevents content-type sniffing.
     """
 
     @app.after_request
-    def set_csp(response):
+    def set_security_headers(response):
         response.headers.setdefault(
             "Content-Security-Policy",
             "default-src 'self'; base-uri 'none'; form-action 'self'; "
-            "object-src 'none'",
+            "frame-ancestors 'none'; object-src 'none'",
         )
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
         return response
 
 
 def _wants_json(req) -> bool:
-    return req.path.startswith(("/scan", "/healthz")) or "application/json" in (
-        req.headers.get("Accept", "")
+    return req.path.startswith(("/scan", "/report", "/healthz")) or (
+        "application/json" in req.headers.get("Accept", "")
     )
 
 

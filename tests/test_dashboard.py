@@ -5,8 +5,11 @@ activity occurs, and no real reconnaissance data is used.
 """
 
 import re
+from pathlib import Path
 
 import config
+
+_MAIN_JS = Path(__file__).resolve().parents[1] / "src" / "static" / "js" / "main.js"
 
 
 def _html(client):
@@ -22,7 +25,32 @@ def test_content_security_policy_header_present(client):
     assert "default-src 'self'" in csp
     assert "base-uri 'none'" in csp
     assert "form-action 'self'" in csp
+    assert "frame-ancestors 'none'" in csp
     assert "object-src 'none'" in csp
+    assert response.headers.get("X-Content-Type-Options") == "nosniff"
+
+
+def test_security_headers_present_on_every_response(client):
+    for path in ("/healthz", "/does-not-exist", "/static/js/main.js"):
+        response = client.get(path)
+        try:
+            csp = response.headers.get("Content-Security-Policy")
+            assert csp is not None and "frame-ancestors 'none'" in csp
+            assert response.headers.get("X-Content-Type-Options") == "nosniff"
+        finally:
+            response.close()
+
+
+def test_frontend_four_state_string_contract():
+    js = _MAIN_JS.read_text(encoding="utf-8")
+    for literal in (
+        '"Not resolved"',
+        '"Unknown"',
+        '"Not available"',
+        '"Not checked"',
+        '"None found"',
+    ):
+        assert literal in js, f"main.js is missing the four-state literal {literal}"
 
 
 def test_authorization_notice_is_prominent_and_marked_as_note(client):

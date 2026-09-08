@@ -30,18 +30,19 @@ Runner = Callable[[str], bool]
 
 @dataclass
 class DiscoveredHost:
-    """A responsive host.
+    """A responsive host found by the ICMP sweep.
 
-    ``hostname``, ``mac`` and ``open_ports`` are placeholders that later
-    milestones will populate; Milestone 2 always leaves them empty.
+    ``hostname`` and ``mac`` are filled in afterwards by enrichment when data is
+    available; ``open_ports`` is filled in by the optional port check. Any of
+    them may stay empty.
     """
 
     ip: str
     status: str = "up"
     discovery_method: str = "icmp"
-    hostname: Optional[str] = None  # Milestone 3
-    mac: Optional[str] = None  # Milestone 3
-    open_ports: list = field(default_factory=list)  # Milestone 4
+    hostname: Optional[str] = None  # filled by enrichment
+    mac: Optional[str] = None  # filled by enrichment
+    open_ports: list = field(default_factory=list)  # filled by the port check
 
     def to_dict(self) -> dict:
         return asdict(self)

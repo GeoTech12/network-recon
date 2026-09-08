@@ -27,7 +27,7 @@ RFC1918_BLOCKS = (
     ipaddress.ip_network("192.168.0.0/16"),
 )
 
-# Milestone 2 keeps sweeps small: at most a /24 (256 total addresses).
+# Scans are kept small: at most a /24 (256 total addresses).
 SUBNET_MAX_ADDRESSES = 256
 
 # Overridable in tests.
@@ -173,7 +173,7 @@ def ensure_allowed_network(value) -> ipaddress.IPv4Network:
 
     if network.num_addresses > SUBNET_MAX_ADDRESSES:
         raise TargetNotAllowed(
-            f"{network} contains {network.num_addresses} addresses; Milestone 2 "
+            f"{network} contains {network.num_addresses} addresses; this tool "
             f"scans a /24 or smaller (at most {SUBNET_MAX_ADDRESSES} addresses). "
             "Set RECON_SUBNET to a smaller subnet."
         )

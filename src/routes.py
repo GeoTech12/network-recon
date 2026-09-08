@@ -6,7 +6,15 @@ each address, then enriches the responsive hosts with a MAC address from the
 local ARP cache and -- only when ``RECON_RESOLVE_HOSTNAMES`` is enabled -- a
 reverse-DNS hostname. When ``RECON_CHECK_PORTS`` is enabled it also checks a
 small fixed list of common TCP ports. Missing hostnames, MAC addresses and open
-ports are all normal. Reporting is a later milestone.
+ports are all normal.
+
+``/scan`` and ``/report`` only accept ``application/json`` request bodies. The
+application sets no CORS headers, so a browser will not let another site read a
+response; requiring JSON additionally forces a CORS preflight that this app does
+not answer, so another site cannot silently start a scan either.
+
+``/report`` writes a local HTML report, and only when the user explicitly asks
+for one.
 """
 
 from datetime import datetime, timezone
@@ -53,11 +61,24 @@ def index():
     )
 
 
+def _is_confirmed(payload) -> bool:
+    """True when the JSON body confirms authorization to scan."""
+    if not isinstance(payload, dict):
+        return False
+    value = payload.get("authorized")
+    if value is True:
+        return True
+    return str(value).strip().lower() in _TRUTHY
+
+
 @main.route("/scan", methods=["POST"])
 def scan():
-    """Discover responsive hosts on the authorised local network."""
-    confirmed = request.form.get("authorized", "").strip().lower() in _TRUTHY
-    if not confirmed:
+    """Discover responsive hosts on the authorised local network.
+
+    Requires a JSON body ``{"authorized": true}``. A non-JSON body (for example a
+    cross-site form post) is rejected the same way as a missing confirmation.
+    """
+    if not _is_confirmed(request.get_json(silent=True)):
         return (
             jsonify(
                 {

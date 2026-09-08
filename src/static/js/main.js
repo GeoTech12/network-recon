@@ -192,13 +192,10 @@ document.addEventListener("DOMContentLoaded", function () {
     resultsBody.setAttribute("aria-busy", "true");
     resultsBody.replaceChildren(placeholderRow("Scanning…"));
 
-    var body = new URLSearchParams();
-    body.set("authorized", checkbox.checked ? "on" : "");
-
     fetch("/scan", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authorized: checkbox.checked }),
     })
       .then(function (response) {
         return response

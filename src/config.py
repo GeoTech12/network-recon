@@ -1,9 +1,9 @@
 """Application configuration for Network Recon.
 
-Configuration is intentionally minimal for Milestone 1. No secret key is defined
-here because the application does not yet use sessions, flashing, or any other
-feature that requires one. When such a requirement is introduced, the value
-should be read from the environment rather than hard-coded.
+Configuration is intentionally minimal. No secret key is defined here because the
+application does not use sessions, flashing, or any other feature that requires
+one. If such a requirement is introduced, the value should be read from the
+environment rather than hard-coded.
 """
 
 import os
