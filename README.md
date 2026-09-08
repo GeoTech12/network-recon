@@ -48,8 +48,8 @@ When you start a scan the application:
    `ping` command (fixed arguments, no shell, no retries, no elevated
    privileges). Addresses that reply are reported as responsive hosts.
 
-No ports are scanned. Scan results are returned to your browser only &mdash;
-nothing is written to disk or logged.
+Port checks are a separate, opt-in step (see below). Scan results are returned to
+your browser only &mdash; nothing is written to disk or logged.
 
 ### Device information
 
@@ -64,14 +64,38 @@ Each responsive host is then enriched, best effort:
   name resolution happens at all. Many home devices have no PTR record, so a
   blank hostname is common and never fails the scan.
 
+### Common port checks (opt-in)
+
+Set `RECON_CHECK_PORTS=1` to also check a small, fixed list of common TCP ports
+on each responsive host. It is **off by default**; when off, no sockets are
+opened for port checks.
+
+| Port | Service | Why it is checked |
+| ---- | ------- | ----------------- |
+| 21   | FTP     | legacy cleartext file transfer (NAS, routers, printers) |
+| 22   | SSH     | remote administration (servers, Pis, NAS, managed switches) |
+| 53   | DNS     | TCP DNS exposed by local resolvers (routers, Pi-hole/dnsmasq) |
+| 80   | HTTP    | device and server web interfaces |
+| 443  | HTTPS   | TLS device and server web interfaces |
+| 445  | SMB     | Windows / Samba file sharing |
+| 3389 | RDP     | Windows Remote Desktop |
+
+Each port gets **one** plain TCP connect attempt (1-second timeout, no retries,
+bounded concurrency, 60-second overall deadline). On a successful connection the
+socket is closed immediately &mdash; nothing is sent and nothing is read, so
+there is no banner grabbing, no authentication and no UDP. Only open ports are
+reported; closed, filtered or timed-out ports are omitted and never fail the
+scan. Connecting and closing may leave a harmless entry in the target device's
+own logs. Results are held in memory and returned to your browser only.
+
 Example fictional values used in this documentation: IPs like `192.0.2.10`,
 hostnames like `desktop-lab` or `printer-demo`, MACs like `52:54:00:1a:2b:3c`.
 
-Set an explicit subnet, or enable hostname resolution, like this:
+Set an explicit subnet, or enable the optional features, like this:
 
 ```bash
-RECON_SUBNET=192.168.1.0/24 RECON_RESOLVE_HOSTNAMES=1 python src/main.py
+RECON_SUBNET=192.168.1.0/24 RECON_RESOLVE_HOSTNAMES=1 RECON_CHECK_PORTS=1 python src/main.py
 ```
 
-> Milestones beyond host discovery (device details, port checks, reporting, UI
-> polish) are still to come. Full documentation is part of Milestone 8.
+> Reporting and UI polish are still to come. Full documentation is part of
+> Milestone 8.

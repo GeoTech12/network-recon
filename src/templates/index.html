@@ -30,7 +30,10 @@
     Discovery sends a single ICMP echo request to each address on your local
     private subnet. MAC addresses are read from this machine's existing ARP
     cache; hostnames are looked up only when reverse-DNS resolution is enabled.
-    Missing hostnames and MAC addresses are normal. No ports are scanned.
+    When TCP port checks are enabled, a fixed list of seven common ports
+    (21, 22, 53, 80, 443, 445, 3389) is tested with a plain connect attempt
+    &mdash; no banners, no UDP. Port checks are off by default. Missing
+    hostnames, MAC addresses and open ports are all normal.
   </p>
 
   <div id="scan-status" class="status" aria-live="polite">

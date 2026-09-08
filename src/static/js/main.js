@@ -1,8 +1,7 @@
 "use strict";
 
-// Milestone 2: the scan calls the discovery endpoint and renders the responsive
-// hosts it returns. Hostname, MAC and port columns are placeholders that later
-// milestones will fill in.
+// The scan calls the discovery endpoint and renders the responsive hosts it
+// returns, including hostname, MAC address and any open common ports.
 
 document.addEventListener("DOMContentLoaded", function () {
   var checkbox = document.getElementById("authorized");
@@ -11,10 +10,21 @@ document.addEventListener("DOMContentLoaded", function () {
   var networkEl = document.getElementById("scan-network");
   var resultsBody = document.getElementById("results-body");
 
-  var PENDING = "Not collected yet";
-
   function syncButton() {
     button.disabled = !checkbox.checked;
+  }
+
+  function formatPorts(ports) {
+    if (!Array.isArray(ports) || ports.length === 0) {
+      return "None found";
+    }
+    return ports
+      .map(function (entry) {
+        return entry.service
+          ? entry.port + " (" + entry.service + ")"
+          : String(entry.port);
+      })
+      .join(", ");
   }
 
   function setStatus(message, isError) {
@@ -50,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
         device.hostname || "Unknown",
         device.mac || "Not available",
         device.status || "unknown",
-        PENDING,
+        formatPorts(device.open_ports),
         data.scan_time || "—",
       ].forEach(function (value) {
         var cell = document.createElement("td");

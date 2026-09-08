@@ -30,6 +30,12 @@ def _stub_enrichment(monkeypatch):
     monkeypatch.setattr(routes, "enrich_hosts", lambda hosts, **_kwargs: hosts)
 
 
+@pytest.fixture(autouse=True)
+def _stub_portscan(monkeypatch):
+    """No test should reach real port checks; identity by default."""
+    monkeypatch.setattr(routes, "check_ports", lambda hosts, network, **_kwargs: hosts)
+
+
 def test_scan_returns_discovered_hosts(client, monkeypatch):
     monkeypatch.setattr(
         routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
@@ -193,3 +199,62 @@ def test_scan_passes_hostname_flag_from_config_to_enrichment(client, monkeypatch
     client.post("/scan", data={"authorized": "on"})
 
     assert seen["resolve_hostnames"] is True
+
+
+def test_scan_includes_open_ports_when_check_ports_provides_them(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+
+    def fake_check_ports(hosts, network, **_kwargs):
+        hosts[0].open_ports = [{"port": 22, "service": "ssh"}]
+        return hosts
+
+    monkeypatch.setattr(routes, "check_ports", fake_check_ports)
+
+    response = client.post("/scan", data={"authorized": "on"})
+
+    assert response.status_code == 200
+    assert response.get_json()["devices"][0]["open_ports"] == [
+        {"port": 22, "service": "ssh"}
+    ]
+
+
+def test_scan_open_ports_empty_by_default(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+
+    response = client.post("/scan", data={"authorized": "on"})
+
+    assert response.status_code == 200
+    assert response.get_json()["devices"][0]["open_ports"] == []
+
+
+def test_scan_passes_port_flag_and_network_from_config_to_check_ports(client, monkeypatch):
+    network = ipaddress.ip_network("192.168.1.0/24")
+    monkeypatch.setattr(routes, "detect_local_network", lambda: network)
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda net: [DiscoveredHost(ip="192.168.1.10")]
+    )
+    monkeypatch.setattr(config, "RECON_CHECK_PORTS", True)
+
+    seen = {}
+
+    def fake_check_ports(hosts, net, *, enabled=False, **_kwargs):
+        seen["enabled"] = enabled
+        seen["network"] = net
+        return hosts
+
+    monkeypatch.setattr(routes, "check_ports", fake_check_ports)
+
+    client.post("/scan", data={"authorized": "on"})
+
+    assert seen["enabled"] is True
+    assert seen["network"] == network

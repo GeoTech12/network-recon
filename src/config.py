@@ -37,6 +37,10 @@ def _env_flag(name: str) -> bool:
 # performs no name resolution of any kind and every host's hostname stays unset.
 RECON_RESOLVE_HOSTNAMES = _env_flag("RECON_RESOLVE_HOSTNAMES")
 
+# TCP port checking is opt-in. When false (the default) no sockets are opened for
+# port checks and every host's open_ports stays empty.
+RECON_CHECK_PORTS = _env_flag("RECON_CHECK_PORTS")
+
 
 class Config:
     """Base configuration."""
