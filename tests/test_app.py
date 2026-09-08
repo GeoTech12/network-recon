@@ -1,4 +1,8 @@
-"""Route and configuration tests for the Milestone 1 web application skeleton."""
+"""Route and configuration tests for the web application skeleton.
+
+Scan behaviour is covered in test_scan_discovery.py, which monkeypatches
+discovery so no real network traffic is generated.
+"""
 
 
 def test_index_ok(client):
@@ -21,15 +25,6 @@ def test_scan_requires_authorization_confirmation(client):
     data = response.get_json()
     assert data["status"] == "error"
     assert "authorized" in data["message"].lower()
-
-
-def test_scan_placeholder_response(client):
-    response = client.post("/scan", data={"authorized": "on"})
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["status"] == "not_implemented"
-    assert data["devices"] == []
-    assert isinstance(data["scan_time"], str) and data["scan_time"]
 
 
 def test_unknown_route_returns_branded_404(client):

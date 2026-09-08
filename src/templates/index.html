@@ -26,6 +26,11 @@
 
   <button id="scan-button" type="button" disabled>Start Scan</button>
 
+  <p class="hint">
+    Discovery sends a single ICMP echo request to each address on your local
+    private subnet. No ports are scanned.
+  </p>
+
   <div id="scan-status" class="status" aria-live="polite">
     No scan has been run yet.
   </div>
@@ -33,6 +38,7 @@
 
 <section class="card">
   <h2>Results</h2>
+  <p class="results-meta">Detected network: <span id="scan-network">&mdash;</span></p>
   <table class="results">
     <thead>
       <tr>

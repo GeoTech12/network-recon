@@ -1,9 +1,11 @@
 """HTTP routes for Network Recon.
 
-Milestone 1 provides only the web application skeleton. The scan endpoint is a
-placeholder: it performs no network activity and returns a fixed "not
-implemented" response. Discovery and port-check logic arrive in later
-milestones.
+Milestone 2 adds local host discovery. The ``/scan`` endpoint determines the
+authorised local subnet (auto-detected, or the validated ``RECON_SUBNET``
+override), sends a single ICMP echo request to each address, and returns the
+responsive hosts as structured data. Hostname resolution, MAC collection, port
+checks and reporting are later milestones; those fields are returned empty for
+now.
 """
 
 from datetime import datetime, timezone
@@ -11,12 +13,14 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, render_template, request
 
 import config
+from recon.discovery import discover_hosts
+from recon.errors import ReconError, TargetNotAllowed
+from recon.localnet import detect_local_network, ensure_allowed_network
 
 main = Blueprint("main", __name__)
 
-# Field labels shown in the (currently empty) results area. These mirror the
-# fields described in the PRD so the interface communicates intent before any
-# scanning exists.
+# Field labels shown in the results area. These mirror the fields described in
+# the PRD; later milestones fill in the columns that are empty in Milestone 2.
 RESULT_FIELDS = [
     "IP Address",
     "Hostname",
@@ -25,6 +29,8 @@ RESULT_FIELDS = [
     "Open Common Ports",
     "Scan Time",
 ]
+
+_TRUTHY = {"1", "true", "yes", "on"}
 
 
 def _now_iso() -> str:
@@ -44,17 +50,8 @@ def index():
 
 @main.route("/scan", methods=["POST"])
 def scan():
-    """Placeholder scan endpoint.
-
-    Requires the caller to confirm authorization, then returns a fixed
-    "not implemented" payload. No network activity is performed.
-    """
-    confirmed = request.form.get("authorized", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    """Discover responsive hosts on the authorised local network."""
+    confirmed = request.form.get("authorized", "").strip().lower() in _TRUTHY
     if not confirmed:
         return (
             jsonify(
@@ -69,12 +66,35 @@ def scan():
             400,
         )
 
+    try:
+        if config.RECON_SUBNET:
+            network = ensure_allowed_network(config.RECON_SUBNET)
+        else:
+            network = ensure_allowed_network(detect_local_network())
+        hosts = discover_hosts(network)
+    except TargetNotAllowed as exc:
+        # The requested scope is not permitted: a client-correctable request.
+        return jsonify({"status": "error", "message": str(exc)}), 400
+    except ReconError as exc:
+        # Includes NetworkDetectionError. Failure to determine the server's own
+        # local network (or to run discovery) is a server-side condition.
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+    devices = [host.to_dict() for host in hosts]
+    count = len(devices)
+    if count:
+        noun = "host" if count == 1 else "hosts"
+        message = f"Discovered {count} responsive {noun} on {network}."
+    else:
+        message = f"No responsive hosts found on {network}."
+
     return jsonify(
         {
-            "status": "not_implemented",
-            "message": "Scan functionality is not yet implemented (Milestone 1).",
-            "devices": [],
+            "status": "ok",
+            "message": message,
             "scan_time": _now_iso(),
+            "network": str(network),
+            "devices": devices,
         }
     )
 

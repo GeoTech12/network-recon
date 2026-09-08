@@ -21,6 +21,12 @@ APP_DESCRIPTION = (
 HOST = "127.0.0.1"
 PORT = 5000
 
+# Optional explicit target subnet in CIDR notation (e.g. "192.168.1.0/24"). When
+# unset, the local network is auto-detected from the routing table. Whatever the
+# source, the value is validated against the allowed private ranges and size
+# limit before any packet is sent.
+RECON_SUBNET = os.environ.get("RECON_SUBNET", "").strip() or None
+
 
 def _env_flag(name: str) -> bool:
     """Return True when the named environment variable holds a truthy value."""
