@@ -6,7 +6,11 @@
   <p class="lede">{{ app_description }}</p>
 </section>
 
-<section class="card notice" role="note" aria-label="Authorization notice">
+<section
+  class="card notice"
+  role="note"
+  aria-label="Authorization and ethical use notice"
+>
   <h2>Authorization &amp; Ethical Use</h2>
   <p>
     Network Recon is intended <strong>only</strong> for networks you own or have
@@ -16,8 +20,31 @@
   </p>
 </section>
 
-<section class="card">
-  <h2>Run a Scan</h2>
+<section class="card" aria-labelledby="run-heading">
+  <h2 id="run-heading">Run a Scan</h2>
+
+  <div class="features">
+    <p class="features__intro">
+      Optional, privacy-sensitive features (configured on the server):
+    </p>
+    <ul class="features__list">
+      <li>
+        {% set hr = 'On' if hostname_resolution_enabled else 'Off' %}
+        <span class="feature-badge feature-badge--{{ hr | lower }}">Hostname resolution: {{ hr }}</span>
+        <span class="feature-note">
+          Reverse-DNS lookups disclose discovered IP addresses to your
+          configured DNS resolver.
+        </span>
+      </li>
+      <li>
+        {% set pc = 'On' if port_check_enabled else 'Off' %}
+        <span class="feature-badge feature-badge--{{ pc | lower }}">Port checks: {{ pc }}</span>
+        <span class="feature-note">
+          Opens a TCP connection to each discovered host on seven common ports.
+        </span>
+      </li>
+    </ul>
+  </div>
 
   <label class="confirm">
     <input type="checkbox" id="authorized" name="authorized" />
@@ -32,34 +59,55 @@
     cache; hostnames are looked up only when reverse-DNS resolution is enabled.
     When TCP port checks are enabled, a fixed list of seven common ports
     (21, 22, 53, 80, 443, 445, 3389) is tested with a plain connect attempt
-    &mdash; no banners, no UDP. Port checks are off by default. Missing
-    hostnames, MAC addresses and open ports are all normal.
+    &mdash; no banners, no UDP.
   </p>
+</section>
 
-  <div id="scan-status" class="status" aria-live="polite">
-    No scan has been run yet.
+<section class="card" aria-labelledby="state-heading">
+  <h2 id="state-heading">Scan status</h2>
+  <div
+    id="scan-status"
+    class="state state--ready"
+    role="status"
+    aria-live="polite"
+  >
+    <span class="state__label">Ready</span>
+    <span class="state__detail">No scan has been run yet.</span>
   </div>
 </section>
 
-<section class="card">
-  <h2>Results</h2>
-  <p class="results-meta">Detected network: <span id="scan-network">&mdash;</span></p>
-  <table class="results">
-    <thead>
-      <tr>
-        {% for field in result_fields %}
-        <th>{{ field }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody id="results-body">
-      <tr>
-        <td class="results__empty" colspan="{{ result_fields | length }}">
-          Results will appear here after a scan.
-        </td>
-      </tr>
-    </tbody>
-  </table>
+<section class="card" aria-labelledby="results-heading">
+  <h2 id="results-heading">Results</h2>
+
+  <dl class="results-summary">
+    <div><dt>Network</dt><dd id="summary-network">&mdash;</dd></div>
+    <div><dt>Devices found</dt><dd id="summary-count">&mdash;</dd></div>
+    <div><dt>Port checks</dt><dd id="summary-ports">&mdash;</dd></div>
+    <div><dt>Scanned at</dt><dd id="summary-time">&mdash;</dd></div>
+  </dl>
+
+  <div class="table-scroll">
+    <table class="results">
+      <caption class="visually-hidden">
+        Discovered hosts with IP address, hostname, MAC address, status and open
+        common ports.
+      </caption>
+      <thead>
+        <tr>
+          {% for field in result_fields %}
+          <th scope="col">{{ field }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody id="results-body" aria-live="polite">
+        <tr>
+          <td class="results__empty" colspan="{{ result_fields | length }}">
+            Results will appear here after a scan.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endblock %}
 

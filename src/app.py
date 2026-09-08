@@ -20,8 +20,27 @@ def create_app(config_object: type = Config) -> Flask:
 
     app.register_blueprint(main)
     _register_error_handlers(app)
+    _register_security_headers(app)
 
     return app
+
+
+def _register_security_headers(app: Flask) -> None:
+    """Send a minimal Content-Security-Policy.
+
+    The dashboard loads only same-origin assets and talks only to its own
+    ``/scan`` endpoint, so a strict policy costs nothing and blocks any
+    accidental third-party resource.
+    """
+
+    @app.after_request
+    def set_csp(response):
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; base-uri 'none'; form-action 'self'; "
+            "object-src 'none'",
+        )
+        return response
 
 
 def _wants_json(req) -> bool:

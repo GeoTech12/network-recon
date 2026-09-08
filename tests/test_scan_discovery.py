@@ -237,6 +237,46 @@ def test_scan_open_ports_empty_by_default(client, monkeypatch):
     assert response.get_json()["devices"][0]["open_ports"] == []
 
 
+def test_scan_response_includes_device_count_and_feature_flags(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes,
+        "discover_hosts",
+        lambda network: [
+            DiscoveredHost(ip="192.168.1.10"),
+            DiscoveredHost(ip="192.168.1.11"),
+        ],
+    )
+
+    data = client.post("/scan", data={"authorized": "on"}).get_json()
+
+    assert data["device_count"] == 2
+    assert data["features"] == {
+        "hostname_resolution": False,
+        "port_check": False,
+    }
+
+
+def test_scan_feature_flags_reflect_config(client, monkeypatch):
+    monkeypatch.setattr(
+        routes, "detect_local_network", lambda: ipaddress.ip_network("192.168.1.0/24")
+    )
+    monkeypatch.setattr(
+        routes, "discover_hosts", lambda network: [DiscoveredHost(ip="192.168.1.10")]
+    )
+    monkeypatch.setattr(config, "RECON_RESOLVE_HOSTNAMES", True)
+    monkeypatch.setattr(config, "RECON_CHECK_PORTS", True)
+
+    data = client.post("/scan", data={"authorized": "on"}).get_json()
+
+    assert data["features"] == {
+        "hostname_resolution": True,
+        "port_check": True,
+    }
+
+
 def test_scan_passes_port_flag_and_network_from_config_to_check_ports(client, monkeypatch):
     network = ipaddress.ip_network("192.168.1.0/24")
     monkeypatch.setattr(routes, "detect_local_network", lambda: network)

@@ -22,15 +22,14 @@ from recon.portscan import check_ports
 
 main = Blueprint("main", __name__)
 
-# Field labels shown in the results area. These mirror the fields described in
-# the PRD; later milestones fill in the columns that are empty in Milestone 2.
+# Column labels for the results table. The scan time is shown once in the
+# results summary rather than repeated on every row.
 RESULT_FIELDS = [
     "IP Address",
     "Hostname",
     "MAC Address",
     "Status",
     "Open Common Ports",
-    "Scan Time",
 ]
 
 _TRUTHY = {"1", "true", "yes", "on"}
@@ -48,6 +47,8 @@ def index():
         app_name=config.APP_NAME,
         app_description=config.APP_DESCRIPTION,
         result_fields=RESULT_FIELDS,
+        hostname_resolution_enabled=bool(config.RECON_RESOLVE_HOSTNAMES),
+        port_check_enabled=bool(config.RECON_CHECK_PORTS),
     )
 
 
@@ -103,6 +104,11 @@ def scan():
             "message": message,
             "scan_time": _now_iso(),
             "network": str(network),
+            "device_count": count,
+            "features": {
+                "hostname_resolution": bool(config.RECON_RESOLVE_HOSTNAMES),
+                "port_check": bool(config.RECON_CHECK_PORTS),
+            },
             "devices": devices,
         }
     )

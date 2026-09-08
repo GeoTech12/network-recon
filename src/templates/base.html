@@ -10,12 +10,13 @@
     />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="site-header">
       <span class="site-header__title">{{ app_name | default("Network Recon") }}</span>
       <span class="site-header__tag">Authorized local reconnaissance</span>
     </header>
 
-    <main class="container">{% block content %}{% endblock %}</main>
+    <main id="main-content" class="container">{% block content %}{% endblock %}</main>
 
     <footer class="site-footer">
       <p>

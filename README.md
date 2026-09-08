@@ -23,6 +23,17 @@ python src/main.py
 Then open <http://127.0.0.1:5000> in a browser. The server binds to localhost
 only and runs with debugging disabled by default.
 
+### The dashboard
+
+The single page shows the scan state (ready, scanning, completed, or error), the
+selected network, the number of devices found, and a per-host table of IP
+address, hostname, MAC address, status, and open common ports. Hostname
+resolution and port checking are surfaced as optional, privacy-sensitive
+features and are off by default. When a feature is off the table says so
+explicitly &mdash; "Not resolved" for hostnames and "Not checked" for ports
+&mdash; rather than implying that nothing was found. Scan results live only in
+the page and are never written to disk, logged, or stored in the browser.
+
 ### Running the tests
 
 ```bash
