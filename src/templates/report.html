@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Network Recon &mdash; Scan Report</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem 1rem;
+        background: #f4f6f8;
+        color: #1f2933;
+        line-height: 1.5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.25rem;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin: 0 0 0.75rem;
+      }
+      .sub {
+        margin: 0 0 1.5rem;
+        color: #52606d;
+        font-size: 0.9rem;
+      }
+      .card {
+        margin-bottom: 1.25rem;
+        padding: 1rem 1.25rem;
+        background: #fff;
+        border: 1px solid #d9e2ec;
+        border-radius: 8px;
+      }
+      .privacy {
+        background: #fff8e6;
+        border-color: #f0c674;
+      }
+      dl.meta {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.25rem 1rem;
+        margin: 1rem 0 0;
+      }
+      dl.meta dt {
+        color: #52606d;
+      }
+      dl.meta dd {
+        margin: 0;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.5rem 0.6rem;
+        border-bottom: 1px solid #d9e2ec;
+      }
+      .muted {
+        color: #52606d;
+        font-style: italic;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      footer {
+        margin-top: 1.5rem;
+        color: #52606d;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Network Recon &mdash; Scan Report</h1>
+      <p class="sub">
+        Report generated {{ generated_at }} &middot; Scan performed
+        {{ scan_time }}
+      </p>
+
+      <section class="card privacy">
+        <strong>Private data.</strong> This report lists IP addresses, MAC
+        addresses, hostnames and open ports for devices on a private network.
+        Keep this file local. Do not commit it to version control, upload it, or
+        share it.
+      </section>
+
+      <section class="card">
+        <p>
+          This scan was performed only against a network the operator owns or is
+          explicitly authorized to assess. The tool performs discovery and
+          identification only &mdash; no authentication, exploitation, or denial
+          of service.
+        </p>
+        <dl class="meta">
+          <dt>Network scanned</dt>
+          <dd class="mono">{{ network }}</dd>
+          <dt>Devices discovered</dt>
+          <dd>{{ device_count }}</dd>
+          <dt>Hostname resolution</dt>
+          <dd>{{ "On" if features.hostname_resolution else "Off" }}</dd>
+          <dt>Port checks</dt>
+          <dd>{{ "On" if features.port_check else "Off" }}</dd>
+        </dl>
+      </section>
+
+      <section class="card">
+        <h2>Discovered devices</h2>
+        {% if devices %}
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">IP address</th>
+              <th scope="col">Hostname</th>
+              <th scope="col">MAC address</th>
+              <th scope="col">Status</th>
+              <th scope="col">Open common ports</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for device in devices %}
+            <tr>
+              <td class="mono">{{ device.ip or "—" }}</td>
+              <td{% if not device.hostname %} class="muted"{% endif %}>
+                {%- if device.hostname -%}
+                {{ device.hostname }}
+                {%- elif features.hostname_resolution -%}
+                Unknown
+                {%- else -%}
+                Not resolved
+                {%- endif -%}
+              </td>
+              <td class="{{ 'mono' if device.mac else 'muted' }}">
+                {{ device.mac if device.mac else "Not available" }}
+              </td>
+              <td>{{ device.status }}</td>
+              <td{% if not (features.port_check and device.open_ports) %} class="muted"{% endif %}>
+                {%- if not features.port_check -%}
+                Not checked
+                {%- elif not device.open_ports -%}
+                None found
+                {%- else -%}
+                {% for p in device.open_ports %}{{ p.port }}{% if p.service %} ({{ p.service }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+                {%- endif -%}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="muted">No responsive hosts were found on {{ network }}.</p>
+        {% endif %}
+      </section>
+
+      <footer>
+        Generated locally by Network Recon. This file was not uploaded anywhere.
+      </footer>
+    </main>
+  </body>
+</html>

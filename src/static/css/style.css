@@ -307,6 +307,26 @@ button:disabled {
   font-style: normal;
 }
 
+.report-controls {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.report-status {
+  margin-top: 0.5rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.report-status:empty {
+  display: none;
+}
+
+.report-status--error {
+  color: #9b2c2c;
+}
+
 .site-footer {
   max-width: 900px;
   margin: 0 auto 2rem;

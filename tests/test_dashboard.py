@@ -85,3 +85,17 @@ def test_feature_notes_describe_privacy_cost(client):
     html = _html(client)
     assert "DNS resolver" in html
     assert "TCP connection to each discovered host" in html
+
+
+def test_save_report_button_present_and_disabled(client):
+    html = _html(client)
+    match = re.search(r"<button[^>]*id=\"report-button\"[^>]*>", html)
+    assert match is not None
+    assert "disabled" in match.group(0)
+
+
+def test_report_status_region_present(client):
+    html = _html(client)
+    assert 'id="report-status"' in html
+    assert 'aria-live="polite"' in html
+    assert "excluded from version control" in html

@@ -19,6 +19,7 @@ from recon.enrichment import enrich_hosts
 from recon.errors import ReconError, TargetNotAllowed
 from recon.localnet import detect_local_network, ensure_allowed_network
 from recon.portscan import check_ports
+from recon.reporting import ReportError, build_report_model, generate_report
 
 main = Blueprint("main", __name__)
 
@@ -110,6 +111,34 @@ def scan():
                 "port_check": bool(config.RECON_CHECK_PORTS),
             },
             "devices": devices,
+        }
+    )
+
+
+@main.route("/report", methods=["POST"])
+def report():
+    """Write the supplied scan result to a local HTML report file.
+
+    This is explicit: the dashboard calls it only when the user clicks "Save
+    report". It performs no scanning and never affects a scan result.
+    """
+    try:
+        model = build_report_model(request.get_json(silent=True))
+    except ReportError as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 400
+
+    try:
+        path = generate_report(model)
+    except ReportError as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+    relative = "reports/" + path.name
+    return jsonify(
+        {
+            "status": "ok",
+            "filename": path.name,
+            "path": relative,
+            "message": f"Report saved to {relative}.",
         }
     )
 

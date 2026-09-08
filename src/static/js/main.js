@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var button = document.getElementById("scan-button");
   var stateEl = document.getElementById("scan-status");
   var resultsBody = document.getElementById("results-body");
+  var reportButton = document.getElementById("report-button");
+  var reportStatus = document.getElementById("report-status");
   var summary = {
     network: document.getElementById("summary-network"),
     count: document.getElementById("summary-count"),
@@ -17,6 +19,17 @@ document.addEventListener("DOMContentLoaded", function () {
     time: document.getElementById("summary-time"),
   };
   var COLUMN_COUNT = document.querySelectorAll(".results thead th").length || 5;
+
+  // The most recent successful scan result, kept in memory only so the user can
+  // save it as a report. Never written to browser storage.
+  var lastScanResult = null;
+
+  function resetReport() {
+    lastScanResult = null;
+    reportButton.disabled = true;
+    reportStatus.textContent = "";
+    reportStatus.classList.remove("report-status--error");
+  }
 
   function syncButton() {
     button.disabled = !checkbox.checked;
@@ -175,6 +188,7 @@ document.addEventListener("DOMContentLoaded", function () {
       true
     );
     button.disabled = true;
+    resetReport();
     resultsBody.setAttribute("aria-busy", "true");
     resultsBody.replaceChildren(placeholderRow("Scanning…"));
 
@@ -213,6 +227,8 @@ document.addEventListener("DOMContentLoaded", function () {
               formatScanTime(data.scan_time) +
               ")."
           );
+          lastScanResult = data;
+          reportButton.disabled = false;
         } else {
           var message =
             (data && data.message) ||
@@ -238,6 +254,49 @@ document.addEventListener("DOMContentLoaded", function () {
       .finally(function () {
         resultsBody.removeAttribute("aria-busy");
         syncButton();
+      });
+  });
+
+  reportButton.addEventListener("click", function () {
+    if (!lastScanResult) {
+      return;
+    }
+    reportButton.disabled = true;
+    reportStatus.classList.remove("report-status--error");
+    reportStatus.textContent = "Saving report…";
+
+    fetch("/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(lastScanResult),
+    })
+      .then(function (response) {
+        return response
+          .json()
+          .catch(function () {
+            return null;
+          })
+          .then(function (data) {
+            return { ok: response.ok, data: data };
+          });
+      })
+      .then(function (result) {
+        var data = result.data;
+        if (result.ok && data && data.status === "ok") {
+          reportStatus.textContent = data.message || "Report saved.";
+        } else {
+          reportStatus.textContent =
+            (data && data.message) || "Could not save the report.";
+          reportStatus.classList.add("report-status--error");
+        }
+      })
+      .catch(function () {
+        reportStatus.textContent =
+          "Could not reach the application to save the report.";
+        reportStatus.classList.add("report-status--error");
+      })
+      .finally(function () {
+        reportButton.disabled = !lastScanResult;
       });
   });
 });

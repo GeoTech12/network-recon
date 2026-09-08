@@ -108,6 +108,16 @@
       </tbody>
     </table>
   </div>
+
+  <div class="report-controls">
+    <button id="report-button" type="button" disabled>Save report</button>
+    <p class="hint">
+      Writes a self-contained HTML report into the local <code>reports/</code>
+      directory. Reports contain private data (IP and MAC addresses, hostnames,
+      open ports), are never uploaded, and are excluded from version control.
+    </p>
+    <div id="report-status" class="report-status" role="status" aria-live="polite"></div>
+  </div>
 </section>
 {% endblock %}
 
