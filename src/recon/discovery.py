@@ -59,7 +59,7 @@ def _run_ping(ip: str) -> bool:
         completed = subprocess.run(
             [
                 "ping",
-                "-n",  # no reverse DNS (hostname resolution is a later milestone)
+                "-n",  # ping performs no reverse DNS; keeps discovery purely ICMP
                 "-q",  # quiet
                 "-c",
                 "1",  # exactly one echo request, no retries

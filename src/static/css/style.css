@@ -1,4 +1,11 @@
+/* Network Recon dashboard styles.
+   System fonts only. No external resources. The one animation (.state__spinner)
+   is disabled under prefers-reduced-motion. Colours are declared as tokens so
+   the prefers-color-scheme: dark block only has to override the tokens. */
+
 :root {
+  color-scheme: light dark;
+
   --bg: #f4f6f8;
   --card-bg: #ffffff;
   --ink: #1f2933;
@@ -6,8 +13,80 @@
   --border: #d9e2ec;
   --accent: #2b6cb0;
   --accent-ink: #ffffff;
+  --btn-hover: #245e94;
+  --btn-disabled-bg: #9aa5b1;
+  --btn-disabled-ink: #ffffff;
+  --btn-secondary-bg: #eef1f4;
+  --btn-secondary-ink: #1f2933;
+  --btn-secondary-border: #d9e2ec;
+
   --notice-bg: #fff8e6;
   --notice-border: #f0c674;
+
+  --header-bg: #1f2933;
+  --header-ink: #ffffff;
+  --header-tag-ink: #cbd2d9;
+
+  --badge-on-bg: #e3f1fb;
+  --badge-on-border: #9fc7e6;
+  --badge-on-ink: #1c4f75;
+  --badge-off-bg: #eef1f4;
+
+  --state-ready: #9aa5b1;
+  --state-ready-bg: #f4f6f8;
+  --state-scanning-bg: #eef5fb;
+  --state-ok: #2f855a;
+  --state-ok-bg: #f0fbf4;
+  --state-err: #c53030;
+  --state-err-bg: #fdecea;
+  --danger-ink: #9b2c2c;
+
+  --table-head-bg: #f4f6f8;
+  --table-stripe: #fafbfc;
+  --code-bg: #eef1f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181d;
+    --card-bg: #1b2128;
+    --ink: #e6e9ec;
+    --ink-soft: #9aa5b1;
+    --border: #2f3742;
+    --accent: #4a9fd4;
+    --accent-ink: #0b0e11;
+    --btn-hover: #62b0e0;
+    --btn-disabled-bg: #3a434e;
+    --btn-disabled-ink: #8b95a1;
+    --btn-secondary-bg: #232b34;
+    --btn-secondary-ink: #cfd6dd;
+    --btn-secondary-border: #3a434e;
+
+    --notice-bg: #2c2712;
+    --notice-border: #6f5d24;
+
+    --header-bg: #0d1116;
+    --header-ink: #e6e9ec;
+    --header-tag-ink: #9aa5b1;
+
+    --badge-on-bg: #123047;
+    --badge-on-border: #2b6a92;
+    --badge-on-ink: #9fd0ef;
+    --badge-off-bg: #232b34;
+
+    --state-ready: #6b7684;
+    --state-ready-bg: #1b2128;
+    --state-scanning-bg: #14212b;
+    --state-ok: #3fa06a;
+    --state-ok-bg: #142a1e;
+    --state-err: #e06666;
+    --state-err-bg: #2c1616;
+    --danger-ink: #f0a6a6;
+
+    --table-head-bg: #212a33;
+    --table-stripe: #1e252d;
+    --code-bg: #232b34;
+  }
 }
 
 * {
@@ -56,13 +135,21 @@ body {
   line-height: 1.5;
 }
 
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
 .site-header {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  background: var(--ink);
-  color: #fff;
+  background: var(--header-bg);
+  color: var(--header-ink);
 }
 
 .site-header__title {
@@ -72,12 +159,12 @@ body {
 
 .site-header__tag {
   font-size: 0.85rem;
-  color: #cbd2d9;
+  color: var(--header-tag-ink);
 }
 
 .container {
   max-width: 900px;
-  margin: 1.5rem auto;
+  margin: 1.5rem auto 2.5rem;
   padding: 0 1rem;
 }
 
@@ -118,16 +205,38 @@ body {
 button {
   font: inherit;
   padding: 0.55rem 1.25rem;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 6px;
   background: var(--accent);
   color: var(--accent-ink);
   cursor: pointer;
 }
 
+button:hover:not(:disabled) {
+  background: var(--btn-hover);
+}
+
 button:disabled {
-  background: #9aa5b1;
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-ink);
   cursor: not-allowed;
+}
+
+#report-button {
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-ink);
+  border-color: var(--btn-secondary-border);
+}
+
+#report-button:hover:not(:disabled) {
+  background: var(--btn-secondary-bg);
+  border-color: var(--accent);
+}
+
+#report-button:disabled {
+  background: var(--btn-secondary-bg);
+  color: var(--btn-disabled-ink);
+  border-color: var(--btn-secondary-border);
 }
 
 .hint {
@@ -150,7 +259,7 @@ button:disabled {
 }
 
 .features__list li {
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.65rem;
 }
 
 .feature-badge {
@@ -163,13 +272,13 @@ button:disabled {
 }
 
 .feature-badge--on {
-  background: #e3f1fb;
-  border-color: #9fc7e6;
-  color: #1c4f75;
+  background: var(--badge-on-bg);
+  border-color: var(--badge-on-border);
+  color: var(--badge-on-ink);
 }
 
 .feature-badge--off {
-  background: #eef1f4;
+  background: var(--badge-off-bg);
   color: var(--ink-soft);
 }
 
@@ -203,25 +312,27 @@ button:disabled {
 }
 
 .state--ready {
-  border-left-color: #9aa5b1;
+  border-left-color: var(--state-ready);
+  background: var(--state-ready-bg);
 }
 
 .state--scanning {
   border-left-color: var(--accent);
+  background: var(--state-scanning-bg);
 }
 
 .state--completed {
-  border-left-color: #2f855a;
-  background: #f0fbf4;
+  border-left-color: var(--state-ok);
+  background: var(--state-ok-bg);
 }
 
 .state--error {
-  border-left-color: #c53030;
-  background: #fdecea;
+  border-left-color: var(--state-err);
+  background: var(--state-err-bg);
 }
 
 .state--error .state__detail {
-  color: #9b2c2c;
+  color: var(--danger-ink);
 }
 
 .state__spinner {
@@ -291,6 +402,19 @@ button:disabled {
   white-space: nowrap;
 }
 
+.results thead th {
+  background: var(--table-head-bg);
+  border-bottom: 2px solid var(--border);
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.results tbody tr:nth-child(even) {
+  background: var(--table-stripe);
+}
+
 .results__empty {
   color: var(--ink-soft);
   font-style: italic;
@@ -324,7 +448,7 @@ button:disabled {
 }
 
 .report-status--error {
-  color: #9b2c2c;
+  color: var(--danger-ink);
 }
 
 .site-footer {
@@ -333,4 +457,19 @@ button:disabled {
   padding: 0 1rem;
   color: var(--ink-soft);
   font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .card {
+    padding: 1rem 1.1rem;
+  }
+
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0.15rem 0.75rem;
+  }
 }
